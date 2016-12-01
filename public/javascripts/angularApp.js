@@ -17,9 +17,14 @@
 		function($stateProvider, $urlRouterProvider){
 			$stateProvider
 				.state('home', {
-					url: '/home',
-					templateUrl: '/templates/home.html',
-					controller: 'mainCtrl'
+				  url: '/home',
+				  templateUrl: '/templates/home.html',
+				  controller: 'mainCtrl',
+				  resolve: {
+				    postPromise: ['posts', function(posts){
+				      return posts.getAll();
+				    }]
+				  }
 				})
 				.state('posts', {
 					url: '/posts/{id}',
@@ -30,9 +35,15 @@
 		}
 	]);
 
-	app.factory('posts', [function(){
+	app.factory('posts', ['$http', function($http){
 		var o = {
 			posts: []
+		};
+
+		o.getAll = function() {
+		    return $http.get('/posts').success(function(data){
+		      angular.copy(data, o.posts);
+		    });
 		};
 		return o;
 	}]);
@@ -77,7 +88,7 @@
 		function($scope, $stateParams, posts) {
 			$scope.post = posts.posts[$stateParams.id];
 			$scope.addComment = function () {
-				if ($scope.body === '') {return;};
+				if ($scope.body === '' || $scope.user === '') {return;};
 				$scope.post.comments.push({
 					body: $scope.body,
 					author: $scope.user,
